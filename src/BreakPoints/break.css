@@ -1,0 +1,5 @@
+.tableflex{
+    display: flex;
+    flex-direction: column;
+}
+
