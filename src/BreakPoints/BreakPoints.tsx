@@ -7,7 +7,7 @@ interface IBreak {
 }
 
 const BreakPoints: FC<IBreak> = (props) => {
-
+    const isDesktop = window.innerWidth>600
     return <div className="tableflex">
         {props.connections?.map((i,index) => {
             const newArr = props.connections?.slice(0)
@@ -19,7 +19,7 @@ const BreakPoints: FC<IBreak> = (props) => {
                 newArr?.splice(index, 1)
                 if (newArr) props.setConnections(newArr)
             }
-            return i?<div>
+            return i?<div style={{width: isDesktop? undefined : "90%"}}>
             <div style={{justifyContent: "flex-end", width: "410px", textAlign:"end"}} className="scrollflex">    
                 <div style={{width: "30px", margin: 0, marginBottom:-10}}>{i.point}</div>
 

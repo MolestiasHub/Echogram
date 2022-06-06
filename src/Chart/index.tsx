@@ -1,6 +1,7 @@
 import { ApexOptions } from "apexcharts"
-import { FC, useCallback, useState } from "react"
+import { FC, useCallback, useEffect, useState } from "react"
 import Graph from 'react-apexcharts'
+import { BehaviorSubject, debounceTime, distinctUntilChanged, skipWhile } from "rxjs"
 import BreakPoints from "../BreakPoints/BreakPoints"
 import { calc, randomized } from "./func"
 import "./index.css"
@@ -26,17 +27,32 @@ const Chart: FC<IChart> = () => {
   const addArr: Array<{x: number, y: number}> = new Array(30).fill(0).map((i,index) => ({x:index, y: 0}))
   const addSecArr = new Array(30).fill(0).map((i,index) => ({x:index+arr.length+addArr.length, y: -6}))
   const addThirdArr = new Array(100).fill(0).map((i,index) => ({x:+(index+arr.length+addArr.length+addSecArr.length).toPrecision(3), y: +randomized().toPrecision(3)}))
-  initArr.push(...addArr)
-  initArr.push(...arr)
-  initArr.push(...addSecArr)
-  initArr.push(...addThirdArr)
+  initArr.push(...addArr, ...arr, ...addSecArr, ...addThirdArr)
   const connectionAddition = () => {
     const newArr = connections.slice(0)
     newArr?.push({point: 0, type: "connector"})
     if (newArr) setConnections(newArr)
-}
+  }
+  const [subj] = useState(() => new BehaviorSubject(connections ?? ""))
+  useEffect(() => {
+    subj.next(connections)
+  }, [connections, subj])
+
+  useEffect(() => {
+    const sub = subj
+      .pipe(
+        debounceTime(500),
+        skipWhile((val) => !val),
+        distinctUntilChanged(),
+      )
+      .subscribe(setConnections)
+
+    return () => {
+      sub.unsubscribe()
+    }
+  }, [subj])
+
   const toggle = useCallback(()=> {
-    console.log(working)
     setWorking(!working)},[setWorking,working])
 
     const state:{options: ApexOptions, series: ApexOptions['series']} = {
@@ -75,12 +91,13 @@ const Chart: FC<IChart> = () => {
           data: working?initArr:[{x: 0, y: 0}]
         }]
       }      
+      const isDesktop = window.innerWidth>600
     return (
-        <div className="main_flex">
-            <div style={{margin: " 30px 150px"}}>
-              <Graph options={state.options} series={state.series} width={1100} height={500} />
+        <div className={isDesktop?"main_flex":"main_flex_mobile"}>
+            <div style={isDesktop ? {margin: " 30px 150px"}: undefined}>
+              <Graph options={state.options} series={state.series} width={isDesktop?1100:"90%"} height={isDesktop?500:300} />
               <div>                
-                <div className="addition" onClick={connectionAddition}></div>
+                <div className="addition" onClick={connectionAddition}/>
                 <BreakPoints connections={connections} setConnections={setConnections} max={initArr.length}/>
               </div>
             </div>  
