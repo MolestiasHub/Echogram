@@ -3,7 +3,7 @@ import { FC, useCallback, useEffect, useState } from "react"
 import Graph from 'react-apexcharts'
 import { BehaviorSubject, debounceTime, distinctUntilChanged, skipWhile } from "rxjs"
 import BreakPoints from "../BreakPoints/BreakPoints"
-import { calc, randomized } from "./func"
+import { calc } from "./func"
 import "./index.css"
 interface IChart {
 
@@ -11,23 +11,18 @@ interface IChart {
 
 const Chart: FC<IChart> = () => {
   const [working, setWorking] = useState(false)
-  const [k, setK] = useState("0")
-  const [m, setM] = useState("0")
-  const [pulse, setPulse] = useState("0")
+  const [m, setM] = useState("0.001")
+  const [pulse, setPulse] = useState("20")
   const [time, setTime] = useState("0")
-  const [l, setL] = useState("0")
+  const [l, setL] = useState("10")
   const [index, setIndex] = useState("0")
   const [lambda, setLambda] = useState(false)
-  const [connections, setConnections] = useState<Array<{type: "connector" | "welding",point: number,}>>([{type: "connector", point: 1},{type: "connector", point: 2}])
-  const initArr:  Array<{x: number, y: number}> = []
-  const arr: Array<{x: number, y: number}> = new Array(100).fill(0).map((i, index) => {
-    return {x: index+30,y: calc(+k,+m,index)}
+  const [range, setRange] = useState("40")
+  const [connections, setConnections] = useState<Array<{type: "connector" | "welding",point: number}>>([{type: "connector", point: 1}])
+  const arr: Array<{x: number, y: number}> = new Array(1000).fill(0).map((i, ind) => {
+    return {x: ind,y: calc(lambda?1310:1550,+l, +range, ind, +m, +pulse, connections)}
   })
 
-  const addArr: Array<{x: number, y: number}> = new Array(30).fill(0).map((i,index) => ({x:index, y: 0}))
-  const addSecArr = new Array(30).fill(0).map((i,index) => ({x:index+arr.length+addArr.length, y: -6}))
-  const addThirdArr = new Array(100).fill(0).map((i,index) => ({x:+(index+arr.length+addArr.length+addSecArr.length).toPrecision(3), y: +randomized().toPrecision(3)}))
-  initArr.push(...addArr, ...arr, ...addSecArr, ...addThirdArr)
   const connectionAddition = () => {
     const newArr = connections.slice(0)
     newArr?.push({point: 0, type: "connector"})
@@ -53,7 +48,8 @@ const Chart: FC<IChart> = () => {
   }, [subj])
 
   const toggle = useCallback(()=> {
-    setWorking(!working)},[setWorking,working])
+    setTimeout(() => setWorking(!working), 500) 
+  },[setWorking,working])
 
     const state:{options: ApexOptions, series: ApexOptions['series']} = {
         options: {
@@ -82,13 +78,13 @@ const Chart: FC<IChart> = () => {
             axisTicks: {
               show: false
             },
-            categories: initArr.map(i => `x: ${i.x}`),
+            categories: arr.map(i => `x: ${i.x}`),
           }
         },
         series: [{
           color: "rgba(39,29,102,1)",
           name: "y",
-          data: working?initArr:[{x: 0, y: 0}]
+          data: working?arr:[{x: 0, y: 0}]
         }]
       }      
       const isDesktop = window.innerWidth>600
@@ -98,7 +94,7 @@ const Chart: FC<IChart> = () => {
               <Graph options={state.options} series={state.series} width={isDesktop?1100:"90%"} height={isDesktop?500:300} />
               <div>                
                 <div className="addition" onClick={connectionAddition}/>
-                <BreakPoints connections={connections} setConnections={setConnections} max={initArr.length}/>
+                <BreakPoints connections={connections} setConnections={setConnections} max={+l}/>
               </div>
             </div>  
             <div className="flex">
@@ -115,26 +111,19 @@ const Chart: FC<IChart> = () => {
                 <div className="flex-radio">
                   <input checked={!lambda} type="radio" className={"radio"} onChange={() => setLambda(false)}></input>
                   <div className="radio--text">
-                    1350 нм
+                    1550 нм
                   </div>
                 </div>
               </div>
               <div className="border">
                 <text>
-                  Коэффициэнт К
-                </text>
-                <input value={k} className={"input"} onChange={(val) => setK(val.target.value)}></input>
-              </div>
-
-              <div className="border">
-                <text>
-                  Коэффициэнт М
+                  Параметр Шума
                 </text>
                 <input value={m} className={"input"} onChange={(val) => setM(val.target.value)}></input>
               </div>
               <div className="border">
                 <text>
-                  Ширина изучения ns
+                  Длительность импульса  ns
                 </text>
                 <input value={pulse} className={"input"} onChange={(val) => setPulse(val.target.value)}></input>
               </div>
@@ -146,7 +135,13 @@ const Chart: FC<IChart> = () => {
               </div>
               <div className="border">
                 <text>
-                  Диапазон КМ
+                  Динамический диапазон дБ
+                </text>
+                <input value={range} className={"input"} onChange={(val) => setRange(val.target.value)}></input>
+              </div>
+              <div className="border">
+                <text>
+                  Длина линии
                 </text>
                 <input value={l} className={"input"} onChange={(val) => setL(val.target.value)}></input>
               </div>
