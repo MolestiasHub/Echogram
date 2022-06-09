@@ -14,11 +14,11 @@ const Chart: FC<IChart> = () => {
   const [m, setM] = useState("0.001")
   const [pulse, setPulse] = useState("20")
   const [time, setTime] = useState("0")
-  const [l, setL] = useState("10")
+  const [l, setL] = useState("100")
   const [index, setIndex] = useState("0")
   const [lambda, setLambda] = useState(false)
   const [range, setRange] = useState("40")
-  const [connections, setConnections] = useState<Array<{type: "connector" | "welding",point: number}>>([{type: "connector", point: 1}])
+  const [connections, setConnections] = useState<Array<{type: "connector" | "welding",point: number}>>([{type: "connector", point: +l}])
   const arr: Array<{x: number, y: number}> = new Array(1000).fill(0).map((i, ind) => {
     return {x: ind,y: calc(lambda?1310:1550,+l, +range, ind, +m, +pulse, connections)}
   })
@@ -67,7 +67,7 @@ const Chart: FC<IChart> = () => {
           },
           yaxis: {
             labels: {
-              formatter: i => i.toPrecision()
+              formatter: i => i.toPrecision() + "дБ"
             },
             decimalsInFloat: 3
           },
@@ -78,7 +78,7 @@ const Chart: FC<IChart> = () => {
             axisTicks: {
               show: false
             },
-            categories: arr.map(i => `x: ${i.x}`),
+            categories: arr.map(i => `${i.x} КМ`),
           }
         },
         series: [{
@@ -145,12 +145,12 @@ const Chart: FC<IChart> = () => {
                 </text>
                 <input value={l} className={"input"} onChange={(val) => setL(val.target.value)}></input>
               </div>
-              <div className="border">
+              {/* <div className="border">
                 <text>
                   Индекс
                 </text>
                 <input value={index} className={"input"} onChange={(val) => setIndex(val.target.value)}></input>
-              </div>
+              </div> */}
               <button onClick={toggle} className="button">
                   Сформировать график
                 </button>
